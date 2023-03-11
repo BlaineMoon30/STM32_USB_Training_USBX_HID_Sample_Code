@@ -60,6 +60,7 @@ void MX_USB_OTG_FS_PCD_Init(void);
 /* Private defines -----------------------------------------------------------*/
 #define User_Button_Pin GPIO_PIN_13
 #define User_Button_GPIO_Port GPIOC
+#define User_Button_EXTI_IRQn EXTI13_IRQn
 #define LED_Red_Pin GPIO_PIN_4
 #define LED_Red_GPIO_Port GPIOG
 #define LED_Green_Pin GPIO_PIN_7

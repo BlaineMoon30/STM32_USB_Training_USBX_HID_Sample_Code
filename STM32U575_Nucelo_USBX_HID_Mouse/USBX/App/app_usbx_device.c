@@ -49,7 +49,9 @@ static UX_SLAVE_CLASS_HID_PARAMETER hid_mouse_parameter;
 static TX_THREAD ux_device_app_thread;
 
 /* USER CODE BEGIN PV */
-
+static TX_THREAD ux_hid_thread;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern uint8_t User_Button_State;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -180,6 +182,20 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
 
   /* USER CODE BEGIN MX_USBX_Device_Init1 */
 
+  /* Allocate the stack for hid mouse thread */
+  if (tx_byte_allocate(byte_pool, (VOID **) &pointer, 1024, TX_NO_WAIT) != TX_SUCCESS)
+  {
+    return TX_POOL_ERROR;
+  }
+
+  /* Create the hid mouse thread. */
+  if (tx_thread_create(&ux_hid_thread, "hid_usbx_app_thread_entry",
+                       usbx_hid_thread_entry, 1, pointer, 1024, 20, 20,
+                       1, TX_AUTO_START) != TX_SUCCESS)
+  {
+    return TX_THREAD_ERROR;
+  }
+
   /* USER CODE END MX_USBX_Device_Init1 */
 
   return ret;
@@ -193,10 +209,63 @@ UINT MX_USBX_Device_Init(VOID *memory_ptr)
 static VOID app_ux_device_thread_entry(ULONG thread_input)
 {
   /* USER CODE BEGIN app_ux_device_thread_entry */
-  TX_PARAMETER_NOT_USED(thread_input);
+
+  /* Initialization of USB device */
+  USBX_APP_Device_Init();
+
   /* USER CODE END app_ux_device_thread_entry */
 }
 
 /* USER CODE BEGIN 1 */
+
+/**
+  * @brief  USBX_APP_Device_Init
+  *         Initialization of USB device.
+  * @param  none
+  * @retval none
+  */
+VOID USBX_APP_Device_Init(VOID)
+{
+  /* USER CODE BEGIN USB_Device_Init_PreTreatment_0 */
+
+  /* USER CODE END USB_Device_Init_PreTreatment_0 */
+
+  /* USB_OTG_HS init function */
+  MX_USB_OTG_FS_PCD_Init();
+
+  /* USER CODE BEGIN USB_Device_Init_PreTreatment_1 */
+
+  HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x100);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x10);
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x20);
+
+  /* USER CODE END USB_Device_Init_PreTreatment_1 */
+
+  /* Initialize and link controller HAL driver */
+  ux_dcd_stm32_initialize((ULONG)USB_OTG_FS, (ULONG)&hpcd_USB_OTG_FS);
+
+  /* Start the USB device */
+  HAL_PCD_Start(&hpcd_USB_OTG_FS);
+
+  /* USER CODE BEGIN USB_Device_Init_PostTreatment */
+
+  /* USER CODE END USB_Device_Init_PostTreatment */
+}
+
+/**
+  * @brief  HAL_GPIO_EXTI_Callback
+  *         EXTI line detection callback.
+  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
+{
+
+  /* Check if EXTI from User Button */
+  if (GPIO_Pin == GPIO_PIN_13)
+  {
+    User_Button_State ^= 1U;
+  }
+}
 
 /* USER CODE END 1 */

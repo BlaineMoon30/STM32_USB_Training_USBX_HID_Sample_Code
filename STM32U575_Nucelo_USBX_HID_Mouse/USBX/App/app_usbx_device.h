@@ -34,7 +34,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ux_dcd_stm32.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -61,7 +61,7 @@ extern "C" {
 UINT MX_USBX_Device_Init(VOID *memory_ptr);
 
 /* USER CODE BEGIN EFP */
-
+VOID USBX_APP_Device_Init(VOID);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
